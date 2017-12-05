@@ -101,6 +101,8 @@ We started this exploration with the command head, which displays the first 6 li
 
 Now that we've loaded and examined the dataframe, we can begin manipulating the data frame using dplyr.
 
+### dplyr
+
 #### select
 Select is used to select certain columns of the dataframe. With complex dataframes, we may not want to keep all columns, especially if some are less than informative. The format for using select is as follows: `select(dataframe, column_to_select`
 ```
@@ -215,3 +217,186 @@ Arrange sorts the dataframe based on the values of a column. The formula for usi
 ```
 
 #### Mutate
+
+Mutate is used to add new columns to the dataframe. The formula for mutate is `mutate(dataframe, name_of_new_column = values_of_new_column)`
+
+```
+> mutate(sleep, total_time = sleep_total + awake)
+
+                             name         genus    vore           order conservation sleep_total sleep_rem sleep_cycle awake brainwt   bodywt total_time
+1                         Cheetah      Acinonyx   carni       Carnivora           lc        12.1        NA          NA 11.90      NA   50.000      24.00
+2                      Owl monkey         Aotus    omni        Primates         <NA>        17.0       1.8          NA  7.00 0.01550    0.480      24.00
+3                 Mountain beaver    Aplodontia   herbi        Rodentia           nt        14.4       2.4          NA  9.60      NA    1.350      24.00
+4      Greater short-tailed shrew       Blarina    omni    Soricomorpha           lc        14.9       2.3   0.1333333  9.10 0.00029    0.019      24.00
+5                             Cow           Bos   herbi    Artiodactyla domesticated         4.0       0.7   0.6666667 20.00 0.42300  600.000      24.00
+6                Three-toed sloth      Bradypus   herbi          Pilosa         <NA>        14.4       2.2   0.7666667  9.60      NA    3.850      24.00
+...
+
+> mutate(sleep, brain_to_body_ratio = brainwt / bodywt)
+
+                             name         genus    vore           order conservation sleep_total sleep_rem sleep_cycle awake brainwt   bodywt brain_to_body_ratio
+1                         Cheetah      Acinonyx   carni       Carnivora           lc        12.1        NA          NA 11.90      NA   50.000                  NA
+2                      Owl monkey         Aotus    omni        Primates         <NA>        17.0       1.8          NA  7.00 0.01550    0.480        0.0322916667
+3                 Mountain beaver    Aplodontia   herbi        Rodentia           nt        14.4       2.4          NA  9.60      NA    1.350                  NA
+4      Greater short-tailed shrew       Blarina    omni    Soricomorpha           lc        14.9       2.3   0.1333333  9.10 0.00029    0.019        0.0152631579
+5                             Cow           Bos   herbi    Artiodactyla domesticated         4.0       0.7   0.6666667 20.00 0.42300  600.000        0.0007050000
+6                Three-toed sloth      Bradypus   herbi          Pilosa         <NA>        14.4       2.2   0.7666667  9.60      NA    3.850                  NA
+...
+
+```
+
+### Combining commands using pipe
+
+`%>%` is known as pipe and is used to combine multiple commands together (*pipe* the output of one command in to the next command). This is especially useful if you know you want to transform a dataframe multiple ways, but don't want to write a bunch of single line commands.
+
+```
+> sleep %>%
+  select(name, vore, sleep_total) %>%
+  filter(vore == 'carni') %>%
+  arrange(-sleep_total)
+  
+                         name  vore sleep_total
+1        Thick-tailed opposum carni        19.4
+2        Long-nosed armadillo carni        17.4
+3                       Tiger carni        15.8
+4  Northern grasshopper mouse carni        14.5
+5                        Lion carni        13.5
+6                Domestic cat carni        12.5
+...
+
+```
+
+To get the same output without pipe, we would have to:
+
+```
+
+> df1 <- select(sleep, name, vore, sleep_total)
+
+> df1 <- filter(df1, vore == 'carni')
+
+> arrange(df1, -sleep_total)
+
+                         name  vore sleep_total
+1        Thick-tailed opposum carni        19.4
+2        Long-nosed armadillo carni        17.4
+3                       Tiger carni        15.8
+4  Northern grasshopper mouse carni        14.5
+5                        Lion carni        13.5
+6                Domestic cat carni        12.5
+...
+
+```
+
+So while possible to avoid pipe, it leads to unneccesary variables (df1) and messy code.
+
+### ggplot2
+
+Now that we have a handle on data manipulation, we can move on to the visualization. For this, we will use ggplot2. Now that you know about ggplot2, you should **never** have to use excel for graphs again. Why abandon excel? Because figures made in excel are ugly.
+
+Let's try to answer some questions about our data through visualization.
+
+##### Question: What is the relationship between -vore status and total sleep?
+
+```
+> df1 <- sleep %>%
+  select(name, vore, sleep_total) %>%
+  filter(!is.na(vore) & vore != 'omni')
+
+> ggplot(data = df1, aes(x = vore, y = sleep_total)) +
+  geom_boxplot()
+  
+> df1 %>%
+  filter(vore == 'insecti')
+  
+                   name    vore sleep_total
+1         Big brown bat insecti        19.7
+2      Little brown bat insecti        19.9
+3       Giant armadillo insecti        18.1
+4 Eastern american mole insecti         8.4
+5   Short-nosed echidna insecti         8.6
+  
+```
+Answer: There is little difference between carnivores and herbivores, but insectivores get more sleep (although the small sample size could cause this to be misleading).
+
+##### Question: How does sleep time of Round-tailed muskrat compared to other rodentia members?
+```
+df2 <- sleep %>%
+  filter(order == 'Rodentia') %>%
+  mutate(name = reorder(name, -sleep_total)) %>%
+  mutate(muskrat = ifelse(name == 'Round-tailed muskrat', 'Yes', 'No')) %>%
+  select(name, order, sleep_total, muskrat)
+
+ggplot(df2, aes(name, sleep_total, fill = muskrat)) +
+  geom_bar(stat = 'identity') +
+  scale_fill_manual(values = c('grey50', 'red')) +
+  scale_y_continuous('Total sleep (hours)',
+               expand = c(0,0)) +
+  ggtitle('Sleepy rodents') +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5),
+        legend.position="none")
+
+```
+Answer: The muskrat is at the upper end of sleepy rodents.
+
+
+##### Question: What is the relationship between body weight and sleep?
+```
+> ggplot(sleep, aes(sleep_total, bodywt)) +
+  geom_point(aes(color = vore))
+
+> ggplot(sleep, aes(sleep_total, bodywt)) +
+  geom_point(aes(color = vore)) +
+  scale_y_continuous(trans = 'log2')
+
+> ggplot(sleep, aes(sleep_total, bodywt)) +
+  geom_point(aes(color = vore)) +
+  geom_smooth(method = 'lm') +
+  scale_y_continuous(trans = 'log2')
+
+> ggplot(sleep, aes(sleep_total, bodywt)) +
+  geom_point(aes(color = vore), size = 3) +
+  stat_smooth(method = 'lm', fullrange = T) +
+  scale_x_continuous('Total sleep',
+                     limits = c(0, 24),
+                     breaks = c(0,6,12,18,24),
+                     expand = c(0,0)) +
+  scale_y_continuous(trans = 'log2') +
+  ggtitle('Relationship between weight and sleep') +
+  theme_classic()
+
+> model <- lm(formula = sleep$sleep_total ~ sleep$bodywt)
+
+> summary(model)
+
+Call:
+lm(formula = sleep$sleep_total ~ sleep$bodywt)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-7.7008 -2.3787 -0.4268  3.2732  9.1731 
+
+Coefficients:
+               Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  10.7269205  0.4773797  22.470  < 2e-16 ***
+sleep$bodywt -0.0017647  0.0005971  -2.956  0.00409 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 4.254 on 81 degrees of freedom
+Multiple R-squared:  0.09735,	Adjusted R-squared:  0.08621 
+F-statistic: 8.736 on 1 and 81 DF,  p-value: 0.004085
+```
+Answer: There is a negative correlation between body weight and sleep. The bigger you are, the less you sleep.
+
+### Conclusion
+
+That was a quick introduction to data manipulation and visualization in R. There are a lot of good tutorials on the internet. If you are having a problem, you can be sure someone else had that same problem and the answer is probably on stack overflow.
+
+You can test out what we just learned on the movies dataset that was downloaded along side the sleep dataset. Try to answer these questions:
+
+1. What is the top rated movie of the 1990s?
+
+2. Is there a correlation between movie budget and rating?
+
+3. What is the top rated Comedy of the 1980s with at least 10 votes? What about Action film?
