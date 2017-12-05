@@ -320,13 +320,13 @@ Answer: There is little difference between carnivores and herbivores, but insect
 
 ##### Question: How does sleep time of Round-tailed muskrat compared to other rodentia members?
 ```
-df2 <- sleep %>%
+> df2 <- sleep %>%
   filter(order == 'Rodentia') %>%
   mutate(name = reorder(name, -sleep_total)) %>%
   mutate(muskrat = ifelse(name == 'Round-tailed muskrat', 'Yes', 'No')) %>%
   select(name, order, sleep_total, muskrat)
 
-ggplot(df2, aes(name, sleep_total, fill = muskrat)) +
+> ggplot(df2, aes(name, sleep_total, fill = muskrat)) +
   geom_bar(stat = 'identity') +
   scale_fill_manual(values = c('grey50', 'red')) +
   scale_y_continuous('Total sleep (hours)',
