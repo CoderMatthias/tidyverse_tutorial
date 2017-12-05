@@ -142,7 +142,7 @@ Select is used to select certain columns of the dataframe. With complex datafram
 
 #### Filter
 
-Filter is used for removing or selecting rows of a dataframe base on a condition. The formula for using filter is as follows: `filter(dataframe, conditional_statement`
+Filter is used for removing or selecting rows of a dataframe base on a condition. The formula for using filter is as follows: `filter(dataframe, conditional_statement)`
 
 ```
 > filter(sleep, name == 'Cheetah')
