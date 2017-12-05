@@ -1,6 +1,7 @@
 library(tidyverse)
 
 setwd('~/Dropbox/sarah/tidyverse_tutorial/')
+list.files()
 
 #################################################
 #
@@ -116,7 +117,6 @@ model <- lm(formula = sleep$sleep_total ~ sleep$bodywt)
 
 summary(model)
 
-
 # How does sleep time of Round-tailed muskrat compared to other rodentia members?
 df2 <- sleep %>%
   filter(order == 'Rodentia') %>%
@@ -149,3 +149,4 @@ ggplot(df2, aes(name, sleep_total, fill = muskrat)) +
 # Is there a correlation between movie budget and rating?
 
 # What is the top rated Comedy of the 1980s with at least 10 votes? What about Action film?
+
