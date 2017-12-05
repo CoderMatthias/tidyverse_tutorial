@@ -26,11 +26,13 @@ dim(sleep)
 #################################################
 
 # Select cetain columns of the dataframe
+head(sleep)
+
 select(sleep, name, sleep_total)
 
-select(sleep, contains('wt'))
+select(sleep, -conservation, -sleep_rem, -sleep_cycle)
 
-select(sleep, -conservation)
+select(sleep, contains('wt'))
 
 # Filtering rows from the dataframe
 
@@ -46,7 +48,7 @@ filter(sleep, order == 'Carnivora' & sleep_total > 12)
 
 # Arranging the data
 
-arrange(sleep, sleep_total)
+arrange(sleep, brainwt)
 
 # Adding columns using mutate
 
@@ -58,13 +60,16 @@ mutate(sleep, brain_to_body_ratio = brainwt / bodywt)
 
 sleep %>%
   select(name, vore, sleep_total) %>%
-  filter(!is.na(vore) & vore != 'omni')
+  filter(vore == 'carni') %>%
+  arrange(-sleep_total)
 
-df1 <- sleep %>%
-  select(name, vore, sleep_total) %>%
-  filter(!is.na(vore) & vore != 'omni')
+# To do the same without pipe, you would have to:
 
-df1
+df1 <- select(sleep, name, vore, sleep_total)
+
+df1 <- filter(df1, vore == 'carni')
+
+arrange(df1, -sleep_total)
 
 #################################################
 #
@@ -72,7 +77,11 @@ df1
 #
 #################################################
 
-# What is the relationship between vore status and total sleep?
+# What is the relationship between -vore status and total sleep?
+df1 <- sleep %>%
+  select(name, vore, sleep_total) %>%
+  filter(!is.na(vore) & vore != 'omni')
+
 ggplot(data = df1, aes(x = vore, y = sleep_total)) +
   geom_boxplot()
 
@@ -104,7 +113,6 @@ ggplot(sleep, aes(sleep_total, bodywt)) +
   theme_classic()
 
 model <- lm(formula = sleep$sleep_total ~ sleep$bodywt)
-model
 
 summary(model)
 
@@ -115,8 +123,6 @@ df2 <- sleep %>%
   mutate(name = reorder(name, -sleep_total)) %>%
   mutate(muskrat = ifelse(name == 'Round-tailed muskrat', 'Yes', 'No')) %>%
   select(name, order, sleep_total, muskrat)
-
-df2
 
 ggplot(df2, aes(name, sleep_total, fill = muskrat)) +
   geom_bar(stat = 'identity') +
@@ -130,5 +136,16 @@ ggplot(df2, aes(name, sleep_total, fill = muskrat)) +
 
 
 
-# Try out these on your own with this dataset or the movies dataset
-         
+#################################################
+#
+#     Try out these methods on the movies dataset
+#
+#################################################
+
+### Questions to answer
+
+# What is the top rated movie of the 1990s?
+
+# Is there a correlation between movie budget and rating?
+
+# What is the top rated Comedy of the 1980s with at least 10 votes? What about Action film?
