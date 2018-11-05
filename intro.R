@@ -10,7 +10,7 @@ list.files()
 #################################################
 
 # Load the data
-sleep <- read.csv('msleep.csv')
+sleep <- read_csv('msleep.csv')
 
 # Examine the data
 head(sleep)
